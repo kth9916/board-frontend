@@ -8,7 +8,7 @@ const BoardContainer = observer(
 
         const [title, setTitle] = useState('');
         const [content, setContent] = useState('');
-        const [posts, setPosts] = useState([]);
+        const [posts, setPosts] = useState<{_id:string, title :string, content : string, boardNo : number}[]>([]);
 
         const getData = async () => {
             await fetch('/board/findAll').then(res => res.json()).then(json => setPosts(json));
@@ -18,14 +18,15 @@ const BoardContainer = observer(
             getData();
         },[]);
 
-        const findByTitle = (post:{_id:string, title :string, content : string}) => {
+        const findByTitle = (post: { title: React.SetStateAction<string>; content: React.SetStateAction<string>; }) => {
             setTitle(post.title);
             setContent(post.content)
             console.log(title);
         }
+
         return (
             <div>
-                {posts.map((post) => <BoardList post={post} findByTitle={findByTitle}/>)}
+                {posts.sort((a,b)=>a.boardNo-b.boardNo).map((post) => <BoardList post={post} findByTitle={findByTitle}/>)}
                 <BoardItem title={title} content={content} />
             </div>
         )
