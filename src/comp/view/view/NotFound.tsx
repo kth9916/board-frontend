@@ -4,7 +4,7 @@ import React from "react";
 const NotFound = observer(
     () => {
         return(
-            <>404 Error</>
+            <div style={{fontSize:'20px', color:'black', fontWeight:'bold'}}><h1>404 Error</h1></div>
         )
     }
 )

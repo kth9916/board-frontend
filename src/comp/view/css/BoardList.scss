@@ -9,13 +9,16 @@
   }
 }
 .boardList-wrapper{
+  margin-top: 1rem;
   opacity: 0;
   animation: smoothAppear 1.5s forwards;
   animation-delay: 0.5s;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: white;
   .boardList-header{
+    margin-top: 1.5rem;
     color: midnightblue;
     font-weight: bold;
     font-size: 2rem;
@@ -25,8 +28,11 @@
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
+    padding: 1rem;
   }
   .boardList-footer{
     margin: 1.5rem;
+    padding : 0 2rem;
+    background-color: green;
   }
 }

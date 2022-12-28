@@ -12,7 +12,8 @@ const Card = observer(
             }}>
                 <div className='card-body-text'>
                     <div className='card-body-text-title'>{props.title}</div>
-                    <div className='card-body-text-title'>{props.userName}</div>
+                    <hr/>
+                    <div className='card-body-text-title'>작성자 {props.userName}</div>
                     <div className='card-body-text-content'>{props.content}</div>
                 </div>
                 <div className='card-footer'>

@@ -2,7 +2,6 @@ import {observer} from "mobx-react";
 import React, {useEffect, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
-import axios from "axios";
 import '../../css/Board.scss'
 import {Button, Dialog, DialogContent, IconButton} from "@mui/material";
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
@@ -10,36 +9,39 @@ import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined
 import DisabledByDefaultOutlinedIcon from "@mui/icons-material/DisabledByDefaultOutlined";
 
 const Board = observer(
-    () => {
+    (props : any) => {
 
         // URL 파라미터 받기
         const _id = useParams().id;
-        const [board, setBoard] = useState<{ _id: string, title: string, userName : string, content: string, boardKind: number, registeredDate: string }>({
-            _id: "",
-            boardKind: 0,
-            content: "",
-            registeredDate: "",
-            title: "",
-            userName: ""
-        });
-        const [isLoaded, setIsLoaded] = useState(false);
         const navigate = useNavigate();
+
+        const [isLoaded, setIsLoaded] = useState(false);
 
         //Modal이 보이는 여부 상태
         const [show, setShow] = useState(false);
 
         // board 가져오기
         useEffect(() => {
-            const getBoard = async () => {
-                const {data} = await axios.get(`/board/findById/${_id}`);
-                return data;
-            }
-            getBoard().then(result => setBoard(result)).then(() => setIsLoaded(true));
+            props.getBoard(_id);
+            setIsLoaded(true);
         }, [_id])
 
         return (
             <>
                 {isLoaded && <div className='board-wrapper'>
+
+                    <div className="board-header">
+                        <div className="board-header-username">작성자 : {props.board.userName}</div>
+                        <div className="date">{props.board.registeredDate}</div>
+                    </div>
+                    <hr/>
+                    <div className="board-body">
+                        <div className="board-title-content">
+                            <div className="board-title">{props.board.title}</div>
+                            <div className="board-content">{props.board.content}</div>
+                        </div>
+                    </div>
+                    <hr/>
                     <div className="edit-delete-button">
                         <Button
                             variant="outlined" color="error" endIcon={<DeleteForeverOutlinedIcon/>}
@@ -59,22 +61,9 @@ const Board = observer(
                             수정
                         </Button>
                     </div>
-                    <div className="board-header">
-                        <div className="board-header-username">{board.userName}</div>
-                        <div className="board-header-date">{board.registeredDate}</div>
-                    </div>
-                    <hr/>
-                    <div className="board-body">
-                        <div className="board-title-content">
-                            <div className="board-title">{board.title}</div>
-                            <div className="board-content">{board.content}</div>
-                        </div>
-                    </div>
-                    <hr/>
                 </div>
                 }
 
-                <div className="board-footer"></div>
                 <Dialog open={show}>
                     <DialogContent style={{position: "relative"}}>
                         <IconButton
@@ -91,9 +80,9 @@ const Board = observer(
                                     color="error"
                                     onClick={async () => {
                                         setShow(false);
-                                        await axios.delete(`/board/deleteById/${_id}`);
+                                        await props.boardDelete(_id);
                                         alert('게시글이 삭제되었습니다.');
-                                        navigate(`/board/${board.boardKind}`);
+                                        navigate(`/board/${props.board.boardKind}`);
                                     }}
                                 >
                                     예
