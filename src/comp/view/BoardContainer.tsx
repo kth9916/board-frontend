@@ -10,6 +10,9 @@ import Home from "./view/pages/Home";
 import EditBoard from "./view/pages/EditBoard";
 import BoardRdo from "../api/feature/board/api-model/BoardRdo";
 import axios from "axios";
+import SignUp from "./view/pages/sign-up/SignUp";
+import Login from "./view/pages/login/Login";
+import PrivateRouter from "./routes/PrivateRouter";
 
 const BoardContainer = observer(
     () => {
@@ -23,10 +26,11 @@ const BoardContainer = observer(
         const [content, setContent] = useState('');
         const [userName, setUserName] = useState('');
         const [boardKind, setBoardKind] = useState(0);
+        const [token, setToken] = useState('');
 
         useEffect(() => {
             getData();
-        }, []);
+        }, [token]);
 
         const getData = async () => {
             await fetch('/board/findAll').then(res => res.json()).then(json => setPosts(json));
@@ -73,27 +77,31 @@ const BoardContainer = observer(
         }
 
         // Board
-        const getBoard = async (_id : string) => {
+        const getBoard = async (_id: string) => {
             await fetch(`/board/findById/${_id}`).then(res => res.json()).then(json => setBoard(json));
         }
 
-        const boardDelete = async (_id : string) => {
+        const boardDelete = async (_id: string) => {
             await axios.delete(`/board/deleteById/${_id}`);
         }
 
-        const boardEdit = async (title : string, content : string, _id : string ) => {
+        const boardEdit = async (title: string, content: string, _id: string) => {
             await axios.put(`/board/modifyById/${_id}`, {
                 title: title,
-                userName : board.userName,
+                userName: board.userName,
                 content: content,
-                boardKind : board.boardKind,
+                boardKind: board.boardKind,
                 id: _id
             });
         }
 
+        const changeToken = (token: string) => {
+            setToken(token);
+        }
+
         return (
             <BrowserRouter>
-                <Header/>
+                <Header token={token} changeToken={changeToken}/>
                 <div style={{marginTop: '1rem', display: 'flex', justifyContent: 'center'}}>
                     <div style={{
                         border: '3px solid black',
@@ -109,14 +117,25 @@ const BoardContainer = observer(
                                                        boardList={boardList}></BoardList>}/>
                             <Route path="*" element={<NotFound/>}></Route>
                             <Route path='/board/registerBoard'
-                                   element={<RegisterBoard boardRegister={boardRegister} content={content}
-                                                           setContent={setContent} title={title} setTitle={setTitle}
-                                                           userName={userName}
-                                                           setUserName={setUserName} canSubmit={canSubmit}
-                                                           boardKind={boardKind} setBoardKind={setBoardKind}
-                                                           handleChange={handleChange}></RegisterBoard>}/>
-                            <Route path='/board/detail/:id' element={<Board getBoard={getBoard} board={board} setBoard={setBoard} boardDelete={boardDelete}/>}/>
-                            <Route path='/board/edit-board/:id' element={<EditBoard boardEdit={boardEdit} board={board} getBoard={getBoard}/>}/>
+                                   element={<PrivateRouter token={token} path='/login'
+                                                           RouteComponent={<RegisterBoard boardRegister={boardRegister}
+                                                                                          content={content}
+                                                                                          setContent={setContent}
+                                                                                          title={title}
+                                                                                          setTitle={setTitle}
+                                                                                          userName={userName}
+                                                                                          setUserName={setUserName}
+                                                                                          canSubmit={canSubmit}
+                                                                                          boardKind={boardKind}
+                                                                                          setBoardKind={setBoardKind}
+                                                                                          handleChange={handleChange}></RegisterBoard>}/>}/>
+                            <Route path='/board/detail/:id'
+                                   element={<Board getBoard={getBoard} board={board} setBoard={setBoard}
+                                                   boardDelete={boardDelete}/>}/>
+                            <Route path='/board/edit-board/:id'
+                                   element={<EditBoard boardEdit={boardEdit} board={board} getBoard={getBoard}/>}/>
+                            <Route path='/join' element={<SignUp/>}/>
+                            <Route path='/login' element={<Login changeToken={changeToken}/>}/>
                         </Routes>
                     </div>
                 </div>
