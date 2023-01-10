@@ -5,7 +5,6 @@ import axios from "axios";
 import {toast, ToastContainer} from "react-toastify";
 import {ErrorMessage, Formik} from "formik";
 import {Button, TextField} from "@mui/material";
-import jwtDecode from "jwt-decode";
 
 const Login = observer(
     (props : any) => {
@@ -25,7 +24,7 @@ const Login = observer(
                     account,
                     password,
                 });
-                props.changeToken(data.token['access_token']);
+                props.changeToken(data.token);
                 const redirectUrl = searchParams.get('redirectUrl');
                 toast.success(<h3>로그인 성공 😁</h3>, {
                     position : 'top-center',

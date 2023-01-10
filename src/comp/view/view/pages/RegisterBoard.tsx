@@ -13,6 +13,7 @@ const RegisterBoard = observer(
 
         const navigate = useNavigate();
 
+
         const handleSubmit = useCallback(async () => {
             try{
                 await props.boardRegister();

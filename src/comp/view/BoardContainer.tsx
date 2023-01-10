@@ -5,14 +5,16 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import BoardList from "./view/pages/BoardList";
 import NotFound from "./view/NotFound";
 import RegisterBoard from "./view/pages/RegisterBoard";
-import Board from "./view/pages/Board";
 import Home from "./view/pages/Home";
-import EditBoard from "./view/pages/EditBoard";
 import BoardRdo from "../api/feature/board/api-model/BoardRdo";
 import axios from "axios";
+import PrivateRoute from "./routes/PrivateRoute";
+import Board from "./view/pages/Board";
+import EditBoard from "./view/pages/EditBoard";
 import SignUp from "./view/pages/sign-up/SignUp";
 import Login from "./view/pages/login/Login";
-import PrivateRouter from "./routes/PrivateRouter";
+import TokenRdo from "../api/feature/member/api-model/TokenRdo";
+
 
 const BoardContainer = observer(
     () => {
@@ -26,14 +28,30 @@ const BoardContainer = observer(
         const [content, setContent] = useState('');
         const [userName, setUserName] = useState('');
         const [boardKind, setBoardKind] = useState(0);
-        const [token, setToken] = useState('');
+        const [token, setToken] = useState<TokenRdo>({access_token: "", refresh_token: ""});
+
+        axios.defaults.headers.common['Authorization'] = 'Bearer ' + token['access_token'];
+        axios.defaults.headers.common['refresh_token'] = 'Bearer ' + token['refresh_token'];
+
+        // 30분
+        let timeout = 1000 * 60 * 30;
+
+        setTimeout(()=>{
+            axios.post('/member/refresh', {
+                access_token : token['access_token'],
+                refresh_token : token['refresh_token'],
+            }).then(r => setToken(r.data))
+        }, timeout )
 
         useEffect(() => {
             getData();
         }, [token]);
 
+        //{headers: {Authorization: 'Bearer ' + token}}
         const getData = async () => {
-            await fetch('/board/findAll').then(res => res.json()).then(json => setPosts(json));
+            await axios.get('/board/findAll' ).then(res => {
+                setPosts(res.data);
+            })
         };
 
         // BoardList
@@ -55,7 +73,10 @@ const BoardContainer = observer(
         }
 
         const getBoardList = async (boardKind: number) => {
-            await fetch(`/board/findByBoardKind/${boardKind}`).then(res => res.json()).then(json => setBoardList(sortJson(json, 'registeredDate', 'desc')));
+            await axios.get(`/board/findByBoardKind/${boardKind}`).then(res => {
+                setBoardList(sortJson(res.data, 'registeredDate', 'desc'))
+            });
+            console.log(token);
         }
 
         // RegisterBoard
@@ -68,7 +89,7 @@ const BoardContainer = observer(
                 title: title,
                 content: content,
                 boardKind: boardKind,
-                userName: userName,
+                userName: userName
             });
         }
 
@@ -78,7 +99,7 @@ const BoardContainer = observer(
 
         // Board
         const getBoard = async (_id: string) => {
-            await fetch(`/board/findById/${_id}`).then(res => res.json()).then(json => setBoard(json));
+            await axios.get(`/board/findById/${_id}`).then(res => setBoard(res.data));
         }
 
         const boardDelete = async (_id: string) => {
@@ -95,7 +116,7 @@ const BoardContainer = observer(
             });
         }
 
-        const changeToken = (token: string) => {
+        const changeToken = (token: TokenRdo) => {
             setToken(token);
         }
 
@@ -116,19 +137,21 @@ const BoardContainer = observer(
                                    element={<BoardList posts={posts} getBoardList={getBoardList}
                                                        boardList={boardList}></BoardList>}/>
                             <Route path="*" element={<NotFound/>}></Route>
-                            <Route path='/board/registerBoard'
-                                   element={<PrivateRouter token={token} path='/login'
-                                                           RouteComponent={<RegisterBoard boardRegister={boardRegister}
-                                                                                          content={content}
-                                                                                          setContent={setContent}
-                                                                                          title={title}
-                                                                                          setTitle={setTitle}
-                                                                                          userName={userName}
-                                                                                          setUserName={setUserName}
-                                                                                          canSubmit={canSubmit}
-                                                                                          boardKind={boardKind}
-                                                                                          setBoardKind={setBoardKind}
-                                                                                          handleChange={handleChange}></RegisterBoard>}/>}/>
+                            <Route
+                                path='/board/registerBoard'
+                                element={
+                                    <PrivateRoute token={token} path='/login'
+                                                  component={<RegisterBoard boardRegister={boardRegister}
+                                                                            content={content}
+                                                                            setContent={setContent}
+                                                                            title={title}
+                                                                            setTitle={setTitle}
+                                                                            userName={userName}
+                                                                            setUserName={setUserName}
+                                                                            canSubmit={canSubmit}
+                                                                            boardKind={boardKind}
+                                                                            setBoardKind={setBoardKind}
+                                                                            handleChange={handleChange}/>}/>}/>
                             <Route path='/board/detail/:id'
                                    element={<Board getBoard={getBoard} board={board} setBoard={setBoard}
                                                    boardDelete={boardDelete}/>}/>

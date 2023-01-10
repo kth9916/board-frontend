@@ -7,16 +7,16 @@ import {JwtUtils} from "../utils/JwtUtils";
 const Header = observer(
     (props:any) => {
         const navigate = useNavigate();
-        const token = props.token;
+        const access_token = props.token['access_token'];
         const [isAuth, setIsAuth] = useState(false);
 
         useEffect(()=>{
-            if(JwtUtils.isAuth(token)){
+            if(JwtUtils.isAuth(access_token)){
                 setIsAuth(true);
             }else{
                 setIsAuth(false);
             }
-        },[token]);
+        },[access_token]);
 
         // 비동기로 처리
         const logout = async () => {

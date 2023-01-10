@@ -1,22 +1,24 @@
 import {observer} from "mobx-react";
 import {JwtUtils} from "../utils/JwtUtils";
 import {Navigate} from "react-router";
+import {Component} from "react";
+import {Route} from "react-router-dom";
 
-const PrivateRouter = observer(
+const PrivateRoute = observer(
     (props : any) => {
 
-        const token = props.token;
+        const access_token = props.token['access_token'];
 
-        if(!JwtUtils.isAuth(token)){
+        if(!JwtUtils.isAuth(access_token)){
             alert('로그인이 필요한 페이지입니다');
             return <Navigate to={`${props.path}`}/>;
         }
 
         return (
-            <props.RouteComponent>
-            </props.RouteComponent>
+           props.component
         )
+
     }
 )
 
-export default PrivateRouter;
+export default PrivateRoute;
