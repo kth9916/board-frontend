@@ -25,7 +25,6 @@ const RegisterBoard = observer(
                 });
             } finally {
                 props.setTitle('');
-                props.setUserName('');
                 props.setContent('');
             }
         },[props.canSubmit])
@@ -58,8 +57,8 @@ const RegisterBoard = observer(
                     </div>
                     <div className="addBoard-body">
                         <TextArea setTitle={props.setTitle} setContent={props.setContent} title={props.title}
-                                  content={props.content}  userName={props.userName}
-                                  setUserName={props.setUserName} handleChange={props.handleChange}/>
+                                  content={props.content}
+                                  handleChange={props.handleChange}/>
                     </div>
                 </div>
             </div>

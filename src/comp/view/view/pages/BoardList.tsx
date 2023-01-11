@@ -1,6 +1,6 @@
 import {observer} from "mobx-react";
 import React, {useEffect, useState} from "react";
-import {Link, useSearchParams} from "react-router-dom";
+import {Link, useNavigate, useSearchParams} from "react-router-dom";
 import Card from "../../UI/Card";
 import {Pagination} from "@mui/material";
 import axios from "axios";
@@ -34,13 +34,16 @@ const BoardList = observer(
         useEffect(() => {
             // 페이지에 해당하는 게시물 가져오기
             props.getBoardList(num);
+            props.getBoardListName(boardKind);
         }, [num])
+
+
 
 
         return (
             <div className="boardList-wrapper">
                 <div className="boardList-header">
-                    전체 게시물 📝
+                    {props.boardListName} 📝
                 </div>
                 <div className="boardList-body">
                     {_DATA.currentData().map((item : BoardRdo, index) => (

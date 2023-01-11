@@ -20,7 +20,7 @@ const Header = observer(
 
         // 비동기로 처리
         const logout = async () => {
-            await props.changeToken('');
+            await props.changeToken({access_token: "", refresh_token: ""});
             alert('로그아웃 되었습니다 😚');
             navigate('/');
         }

@@ -24,14 +24,6 @@ const TextArea = observer(
                     placeholder="제목을 입력하세요"
                     defaultValue={props.isEdit === 'edit' ? props.prevTitle : props.title}
                 />
-                {props.isEdit === 'edit' ? '' : <input
-                    onChange={(e) => {
-                        props.setUserName(e.target.value);
-                    }}
-                    className="userName"
-                    placeholder="이름을 입력하세요"
-                    value={props.userName}
-                />}
                 <textarea
                     onChange={(e) => {
                         props.setContent(e.target.value);

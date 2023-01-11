@@ -14,6 +14,9 @@ import EditBoard from "./view/pages/EditBoard";
 import SignUp from "./view/pages/sign-up/SignUp";
 import Login from "./view/pages/login/Login";
 import TokenRdo from "../api/feature/member/api-model/TokenRdo";
+import MemberRdo from "../api/feature/member/api-model/MemberRdo";
+import jwtDecode from "jwt-decode";
+import {JwtUtils} from "./utils/JwtUtils";
 
 
 const BoardContainer = observer(
@@ -24,11 +27,13 @@ const BoardContainer = observer(
         const [board, setBoard] = useState<BoardRdo>({
             _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: ""
         });
+        const [boardListName, setBoardListName] = useState<string>('');
         const [title, setTitle] = useState('');
         const [content, setContent] = useState('');
-        const [userName, setUserName] = useState('');
         const [boardKind, setBoardKind] = useState(0);
         const [token, setToken] = useState<TokenRdo>({access_token: "", refresh_token: ""});
+        const [member, setMember] = useState<MemberRdo>();
+        const [account, setAccount] = useState<string>('');
 
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + token['access_token'];
         axios.defaults.headers.common['refresh_token'] = 'Bearer ' + token['refresh_token'];
@@ -46,6 +51,10 @@ const BoardContainer = observer(
         useEffect(() => {
             getData();
         }, [token]);
+
+        useEffect(() => {
+            getMember(account);
+        },[account])
 
         //{headers: {Authorization: 'Bearer ' + token}}
         const getData = async () => {
@@ -76,21 +85,22 @@ const BoardContainer = observer(
             await axios.get(`/board/findByBoardKind/${boardKind}`).then(res => {
                 setBoardList(sortJson(res.data, 'registeredDate', 'desc'))
             });
-            console.log(token);
         }
 
         // RegisterBoard
         const canSubmit = useCallback(() => {
-            return content !== "" && title !== "" && boardKind !== 0 && userName !== "";
-        }, [title, content, boardKind, userName]);
+            return content !== "" && title !== "" && boardKind !== 0;
+        }, [title, content, boardKind]);
 
         const boardRegister = async () => {
             await axios.post("/board/registerPost", {
                 title: title,
                 content: content,
                 boardKind: boardKind,
-                userName: userName
+                userName: member?.name,
+                userId : member?.account,
             });
+            console.log('이름'+member?.account);
         }
 
         const handleChange = (e: any) => {
@@ -109,15 +119,47 @@ const BoardContainer = observer(
         const boardEdit = async (title: string, content: string, _id: string) => {
             await axios.put(`/board/modifyById/${_id}`, {
                 title: title,
-                userName: board.userName,
+                userName: member?.name,
                 content: content,
                 boardKind: board.boardKind,
-                id: _id
+                id: _id,
+                userId : member?.account,
             });
         }
 
+        const getBoardListName = (boardKind : string) =>{
+            if(boardKind === '1'){
+                setBoardListName('일반 게시판');
+            }
+            if(boardKind === '2'){
+                setBoardListName('공지 게시판');
+            }
+            if(boardKind === '3'){
+                setBoardListName('FAQ 게시판');
+
+            }
+            if(boardKind === '4'){
+                setBoardListName('Q&A 게시판');
+            }
+        }
+
+        // Member
+
         const changeToken = (token: TokenRdo) => {
             setToken(token);
+        }
+
+        const changeAccount = (access_token : string) => {
+            setAccount(JwtUtils.getAccount(access_token));
+        };
+
+
+        const getMember = async (account : string) => {
+            await axios.get('/member/user/get', {
+                params: {
+                    account: account
+                }
+            }).then(res => setMember(res.data));
         }
 
         return (
@@ -135,7 +177,7 @@ const BoardContainer = observer(
                             <Route path="/" element={<Home/>}/>
                             <Route path="/board/:boardKind"
                                    element={<BoardList posts={posts} getBoardList={getBoardList}
-                                                       boardList={boardList}></BoardList>}/>
+                                                       boardList={boardList} getBoardListName={getBoardListName} boardListName={boardListName}></BoardList> }/>
                             <Route path="*" element={<NotFound/>}></Route>
                             <Route
                                 path='/board/registerBoard'
@@ -146,8 +188,6 @@ const BoardContainer = observer(
                                                                             setContent={setContent}
                                                                             title={title}
                                                                             setTitle={setTitle}
-                                                                            userName={userName}
-                                                                            setUserName={setUserName}
                                                                             canSubmit={canSubmit}
                                                                             boardKind={boardKind}
                                                                             setBoardKind={setBoardKind}
@@ -158,7 +198,7 @@ const BoardContainer = observer(
                             <Route path='/board/edit-board/:id'
                                    element={<EditBoard boardEdit={boardEdit} board={board} getBoard={getBoard}/>}/>
                             <Route path='/join' element={<SignUp/>}/>
-                            <Route path='/login' element={<Login changeToken={changeToken}/>}/>
+                            <Route path='/login' element={<Login changeToken={changeToken} changeAccount={changeAccount}/>}/>
                         </Routes>
                     </div>
                 </div>
