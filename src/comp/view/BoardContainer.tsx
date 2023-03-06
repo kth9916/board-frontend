@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+
 import React, {useCallback, useEffect, useState} from "react";
 import Header from "./view/Header";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
@@ -17,51 +17,93 @@ import TokenRdo from "../api/feature/member/api-model/TokenRdo";
 import MemberRdo from "../api/feature/member/api-model/MemberRdo";
 import jwtDecode from "jwt-decode";
 import {JwtUtils} from "./utils/JwtUtils";
+import {useAtom} from "jotai/react/useAtom";
+import {atom,PrimitiveAtom} from "jotai/vanilla/atom";
+import {useQuery} from "react-query";
+import {useSetAtom} from "jotai/react/useSetAtom";
+import {useInterval, useSet} from "react-use";
+
+const postAtom = atom([]);
+const postsQueryAtom = atom(false);
+const tokenAtom = atom<TokenRdo>({access_token: '', refresh_token: ''});
 
 
-const BoardContainer = observer(
+
+const BoardContainer = (
     () => {
 
-        const [posts, setPosts] = useState<BoardRdo[]>([]);
-        const [boardList, setBoardList] = useState<BoardRdo[]>([]);
-        const [board, setBoard] = useState<BoardRdo>({
+        const setPosts = useSetAtom(postAtom);
+        const setPostsQueryEnabled = useSetAtom(postsQueryAtom);
+        const [token, setToken] = useAtom(tokenAtom);
+
+        const boradListAtom = atom([]);
+        const [boardList, setBoardList] = useAtom<BoardRdo[]>(boradListAtom);
+
+        const boardAtom = atom({
             _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: ""
-        });
-        const [boardListName, setBoardListName] = useState<string>('');
-        const [title, setTitle] = useState('');
-        const [content, setContent] = useState('');
-        const [boardKind, setBoardKind] = useState(0);
-        const [token, setToken] = useState<TokenRdo>({access_token: "", refresh_token: ""});
-        const [member, setMember] = useState<MemberRdo>();
-        const [account, setAccount] = useState<string>('');
+        })
+        const [board, setBoard] = useAtom<BoardRdo>(boardAtom);
+
+        const boardListNameAtom = atom('');
+        const [boardListName, setBoardListName] = useAtom<string>(boardListNameAtom);
+
+        const titleAtom = atom('');
+        const [title, setTitle] = useAtom(titleAtom);
+
+        const contentAtom = atom('');
+        const [content, setContent] = useAtom(contentAtom);
+
+        const boardKindAtom = atom(0);
+        const [boardKind, setBoardKind] = useAtom(boardKindAtom);
+
+
+
+        const memberAtom = atom({account : '', name : '', nickname : '', email : ''});
+        const [member, setMember] = useAtom<MemberRdo>(memberAtom);
+
+        const accountAtom = atom('');
+        const [account, setAccount] = useAtom<string>(accountAtom);
+
 
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + token['access_token'];
         axios.defaults.headers.common['refresh_token'] = 'Bearer ' + token['refresh_token'];
 
-        // 30분
-        let timeout = 1000 * 60 * 30;
-
-        setTimeout(()=>{
-            axios.post('/member/refresh', {
-                access_token : token['access_token'],
-                refresh_token : token['refresh_token'],
-            }).then(r => setToken(r.data))
-        }, timeout )
+        const { isLoading, data } = useQuery('posts', async () => {
+            const response = await axios.get('board/findAll');
+            return response.data;
+        });
 
         useEffect(() => {
-            getData();
-        }, [token]);
+            if(!isLoading && data){
+                setPosts(data);
+            }
+        },[isLoading, data, setPosts]);
+
+        useEffect(()=>{
+            setPostsQueryEnabled(true);
+        },[setPostsQueryEnabled]);
+
+        useEffect(() => {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await axios.post('/member/refresh', {
+                        access_token: token.access_token,
+                        refresh_token: token.refresh_token,
+                    });
+                    setToken(response.data);
+                } catch (error) {
+                    console.error('Failed to refresh access token:', error);
+                }
+            }, 1000 * 60 * 30);
+
+            return () => clearInterval(interval);
+        }, [token, setToken]);
+
+
 
         useEffect(() => {
             getMember(account);
         },[account])
-
-        //{headers: {Authorization: 'Bearer ' + token}}
-        const getData = async () => {
-            await axios.get('/board/findAll' ).then(res => {
-                setPosts(res.data);
-            })
-        };
 
         // BoardList
 
