@@ -1,16 +1,26 @@
-import {observer} from "mobx-react";
 import React, {useEffect, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import '../css/Header.scss';
 import {JwtUtils} from "../utils/JwtUtils";
+import {useQueryClient} from "react-query";
+import {useAtom} from "jotai";
+import TokenRdo from "../../api/feature/member/api-model/TokenRdo";
+import {tokenAtom} from "../AppContainer";
 
-const Header = observer(
-    (props:any) => {
+interface Props{
+    token: TokenRdo;
+    changeToken: (token: TokenRdo) => void;
+}
+
+const Header = ({ token, changeToken }: Props) => {
         const navigate = useNavigate();
-        const access_token = props.token['access_token'];
         const [isAuth, setIsAuth] = useState(false);
+        const queryClient = useQueryClient();
+        const [atomToken, setAtomToken] = useAtom(tokenAtom);
 
-        useEffect(()=>{
+        const access_token = atomToken['access_token'];
+
+        useEffect(() => {
             if(JwtUtils.isAuth(access_token)){
                 setIsAuth(true);
             }else{
@@ -19,11 +29,12 @@ const Header = observer(
         },[access_token]);
 
         // 비동기로 처리
-        const logout = async () => {
-            await props.changeToken({access_token: "", refresh_token: ""});
-            alert('로그아웃 되었습니다 😚');
+        const handleLogout = async () => {
+            setAtomToken({ access_token: '', refresh_token: '' });
+            alert('Logged out successfully');
             navigate('/');
-        }
+            await queryClient.invalidateQueries('posts');
+        };
 
         return (
             <div className="header-wrapper">
@@ -41,18 +52,18 @@ const Header = observer(
                     {isAuth ? (
                         <>
                             <Link to='/myboard-list'>내 게시물</Link>
-                            <Link to='#' onClick={logout}>로그아웃</Link>
+                            <Link to='#' onClick={handleLogout}>로그아웃</Link>
                         </>
                     ) : (
                         <>
                             <Link to='/join'>회원가입</Link>
-                            <Link to='/login' >로그인</Link>
+                            <Link to='/login'>로그인</Link>
                         </>
                     )}
                 </div>
             </div>
         )
     }
-)
+
 
 export default Header;

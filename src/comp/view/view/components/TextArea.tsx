@@ -1,15 +1,42 @@
-import {observer} from "mobx-react";
+
 import React, {useEffect} from "react";
 import '../../css/TextArea.scss'
-import axios from "axios";
+import {useAtom} from "jotai";
+import {antenaAtom, contentAtom, titleAtom} from "../../AppContainer";
 
-const TextArea = observer(
-    (props: any) => {
+export interface TextAreaProps {
+    handleChange?: (e: any) => void;
+}
+
+interface Props extends TextAreaProps{
+    isEdit?: string,
+    id?: string | undefined,
+    defaultContent?: string,
+    defaultTitle?: string,
+}
+
+const TextArea = ({handleChange, isEdit, id, defaultContent, defaultTitle}:Props) => {
+
+        const [title, setTitle] = useAtom(titleAtom);
+        const [content, setContent] = useAtom(contentAtom);
+        const [antena, setAntena] = useAtom(antenaAtom);
+
+        useEffect(() => {
+            if(defaultContent){
+                setContent(defaultContent);
+            }
+        }, [defaultContent])
+
+        useEffect(() => {
+            if(defaultTitle){
+                setTitle(defaultTitle);
+            }
+        }, [defaultTitle])
 
         return (
             <div className="textArea-wrapper">
-                {props.isEdit === 'edit' ? '' :
-                    <select onChange={props.handleChange} defaultValue='default' style={{marginBottom: '0.7rem'}}>
+                {isEdit === 'edit' ? '' :
+                    <select onChange={handleChange} defaultValue='default' style={{marginBottom: '0.7rem'}}>
                         <option value='default' disabled>게시판을 선택하세요</option>
                         <option key='1' value='1'>일반 게시판</option>
                         <option key='2' value='2'>공지 게시판</option>
@@ -18,23 +45,25 @@ const TextArea = observer(
                     </select>}
                 <input
                     onChange={(e) => {
-                        props.setTitle(e.target.value);
+                        setTitle(e.target.value);
+                        setAntena(true);
                     }}
                     className="title"
                     placeholder="제목을 입력하세요"
-                    defaultValue={props.isEdit === 'edit' ? props.prevTitle : props.title}
+                    defaultValue={defaultTitle || ''}
                 />
                 <textarea
                     onChange={(e) => {
-                        props.setContent(e.target.value);
+                        setContent(e.target.value);
+                        setAntena(true);
                     }}
                     className="text"
                     placeholder="내용을 입력하세요"
-                    defaultValue={props.isEdit === 'edit' ? props.prevContent : props.content}
+                    defaultValue={defaultContent || ''}
                 />
             </div>
         )
     }
-)
+
 
 export default TextArea

@@ -1,5 +1,5 @@
 
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect} from "react";
 import Header from "./view/Header";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import BoardList from "./view/pages/BoardList";
@@ -14,55 +14,54 @@ import EditBoard from "./view/pages/EditBoard";
 import SignUp from "./view/pages/sign-up/SignUp";
 import Login from "./view/pages/login/Login";
 import TokenRdo from "../api/feature/member/api-model/TokenRdo";
-import MemberRdo from "../api/feature/member/api-model/MemberRdo";
-import jwtDecode from "jwt-decode";
 import {JwtUtils} from "./utils/JwtUtils";
-import {useAtom} from "jotai/react/useAtom";
-import {atom,PrimitiveAtom} from "jotai/vanilla/atom";
+import {useAtom} from "jotai";
+import {atom} from "jotai";
 import {useQuery} from "react-query";
-import {useSetAtom} from "jotai/react/useSetAtom";
-import {useInterval, useSet} from "react-use";
+import {useSetAtom} from "jotai";
+import {SetStateAction} from "jotai";
 
-const postAtom = atom([]);
-const postsQueryAtom = atom(false);
-const tokenAtom = atom<TokenRdo>({access_token: '', refresh_token: ''});
+export const postsAtom = atom([]);
+export const postsQueryAtom = atom(false);
+export const tokenAtom = atom<TokenRdo>({access_token: '', refresh_token: ''});
+export const boardListAtom = atom<BoardRdo[]>([]);
+export const boardAtom = atom({
+    _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: ""
+})
+export const boardListNameAtom = atom('');
+export const titleAtom = atom('');
+export const contentAtom = atom('');
+export const boardKindAtom = atom(0);
+export const memberAtom = atom({account : '', name : '', nickname : '', email : ''});
+export const accountAtom = atom('');
+export const antenaAtom = atom(false);
 
 
-
-const BoardContainer = (
+const AppContainer = (
     () => {
-
-        const setPosts = useSetAtom(postAtom);
+        const [posts, setPosts] = useAtom(postsAtom);
         const setPostsQueryEnabled = useSetAtom(postsQueryAtom);
         const [token, setToken] = useAtom(tokenAtom);
 
-        const boradListAtom = atom([]);
-        const [boardList, setBoardList] = useAtom<BoardRdo[]>(boradListAtom);
 
-        const boardAtom = atom({
-            _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: ""
-        })
-        const [board, setBoard] = useAtom<BoardRdo>(boardAtom);
+        const [boardList, setBoardList] = useAtom(boardListAtom);
 
-        const boardListNameAtom = atom('');
-        const [boardListName, setBoardListName] = useAtom<string>(boardListNameAtom);
 
-        const titleAtom = atom('');
+        const [board, setBoard] = useAtom(boardAtom);
+
+        const [boardListName, setBoardListName] = useAtom(boardListNameAtom);
+
         const [title, setTitle] = useAtom(titleAtom);
 
-        const contentAtom = atom('');
         const [content, setContent] = useAtom(contentAtom);
 
-        const boardKindAtom = atom(0);
         const [boardKind, setBoardKind] = useAtom(boardKindAtom);
 
 
 
-        const memberAtom = atom({account : '', name : '', nickname : '', email : ''});
-        const [member, setMember] = useAtom<MemberRdo>(memberAtom);
+        const [member, setMember] = useAtom(memberAtom);
 
-        const accountAtom = atom('');
-        const [account, setAccount] = useAtom<string>(accountAtom);
+        const [account, setAccount] = useAtom(accountAtom);
 
 
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + token['access_token'];
@@ -99,14 +98,7 @@ const BoardContainer = (
             return () => clearInterval(interval);
         }, [token, setToken]);
 
-
-
-        useEffect(() => {
-            getMember(account);
-        },[account])
-
         // BoardList
-
         const sortJson = (data: any, key: any, type: string) => {
             if (type == undefined) {
                 type = 'asc';
@@ -129,6 +121,8 @@ const BoardContainer = (
             });
         }
 
+
+
         // RegisterBoard
         const canSubmit = useCallback(() => {
             return content !== "" && title !== "" && boardKind !== 0;
@@ -145,13 +139,13 @@ const BoardContainer = (
             console.log('이름'+member?.account);
         }
 
-        const handleChange = (e: any) => {
+        const handleBoardKindChange = (e: any) => {
             setBoardKind(e.target.value);
         }
 
         // Board
         const getBoard = async (_id: string) => {
-            await axios.get(`/board/findById/${_id}`).then(res => setBoard(res.data));
+            await axios.get(`/board/findById/${_id}`).then(res => (setBoard as (value:SetStateAction<BoardRdo>) => void)(res.data));
         }
 
         const boardDelete = async (_id: string) => {
@@ -187,6 +181,10 @@ const BoardContainer = (
 
         // Member
 
+        useEffect(() => {
+            getMember(account);
+        },[account])
+
         const changeToken = (token: TokenRdo) => {
             setToken(token);
         }
@@ -218,27 +216,19 @@ const BoardContainer = (
                         <Routes>
                             <Route path="/" element={<Home/>}/>
                             <Route path="/board/:boardKind"
-                                   element={<BoardList posts={posts} getBoardList={getBoardList}
-                                                       boardList={boardList} getBoardListName={getBoardListName} boardListName={boardListName}></BoardList> }/>
+                                   element={<BoardList getBoardList={getBoardList} getBoardListName={getBoardListName}></BoardList> }/>
                             <Route path="*" element={<NotFound/>}></Route>
                             <Route
                                 path='/board/registerBoard'
                                 element={
-                                    <PrivateRoute token={token} path='/login'
+                                    <PrivateRoute path='/login'
                                                   component={<RegisterBoard boardRegister={boardRegister}
-                                                                            content={content}
-                                                                            setContent={setContent}
-                                                                            title={title}
-                                                                            setTitle={setTitle}
                                                                             canSubmit={canSubmit}
-                                                                            boardKind={boardKind}
-                                                                            setBoardKind={setBoardKind}
-                                                                            handleChange={handleChange}/>}/>}/>
+                                                                            handleChange={handleBoardKindChange}/>}/>}/>
                             <Route path='/board/detail/:id'
-                                   element={<Board getBoard={getBoard} board={board} setBoard={setBoard}
-                                                   boardDelete={boardDelete}/>}/>
+                                   element={<Board getBoard={getBoard} boardDelete={boardDelete}/>}/>
                             <Route path='/board/edit-board/:id'
-                                   element={<EditBoard boardEdit={boardEdit} board={board} getBoard={getBoard}/>}/>
+                                   element={<EditBoard boardEdit={boardEdit} getBoard={getBoard}/>}/>
                             <Route path='/join' element={<SignUp/>}/>
                             <Route path='/login' element={<Login changeToken={changeToken} changeAccount={changeAccount}/>}/>
                         </Routes>
@@ -249,4 +239,4 @@ const BoardContainer = (
     }
 )
 
-export default BoardContainer;
+export default AppContainer;

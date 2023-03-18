@@ -1,14 +1,18 @@
-import {observer} from "mobx-react";
+
 import {useNavigate, useSearchParams} from "react-router-dom";
 import * as Yup from 'yup';
 import axios from "axios";
 import {toast, ToastContainer} from "react-toastify";
 import {ErrorMessage, Formik} from "formik";
 import {Button, TextField} from "@mui/material";
-import jwtDecode from "jwt-decode";
+import TokenRdo from "../../../../api/feature/member/api-model/TokenRdo";
 
-const Login = observer(
-    (props : any) => {
+interface Props{
+    changeToken: (token: TokenRdo) => void,
+    changeAccount: (access_token: string) => void
+}
+
+const Login = ({changeToken, changeAccount}:Props) => {
         const navigate = useNavigate();
         const [searchParams, setSearchParams] = useSearchParams();
         const validationSchema = Yup.object().shape({
@@ -25,8 +29,8 @@ const Login = observer(
                     account,
                     password,
                 });
-                props.changeToken(data.token);
-                props.changeAccount(data.token.access_token);
+                changeToken(data.token);
+                changeAccount(data.token.access_token);
                 const redirectUrl = searchParams.get('redirectUrl');
                 toast.success(<h3>로그인 성공 😁</h3>, {
                     position : 'top-center',
@@ -101,6 +105,6 @@ const Login = observer(
             </Formik>
         )
     }
-)
+
 
 export default Login;

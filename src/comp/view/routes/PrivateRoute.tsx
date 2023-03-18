@@ -1,24 +1,30 @@
-import {observer} from "mobx-react";
+
 import {JwtUtils} from "../utils/JwtUtils";
 import {Navigate} from "react-router";
-import {Component} from "react";
-import {Route} from "react-router-dom";
+import {useAtom} from "jotai";
+import {tokenAtom} from "../AppContainer";
 
-const PrivateRoute = observer(
-    (props : any) => {
+interface Props{
+    path: string,
+    component: JSX.Element,
+}
 
-        const access_token = props.token['access_token'];
+const PrivateRoute = ({path, component}:Props) => {
+
+        const [token, setToken] = useAtom(tokenAtom);
+
+        const access_token = token['access_token'];
 
         if(!JwtUtils.isAuth(access_token)){
             alert('로그인이 필요한 페이지입니다');
-            return <Navigate to={`${props.path}`}/>;
+            return <Navigate to={`${path}`}/>;
         }
 
         return (
-           props.component
+           component
         )
 
     }
-)
+
 
 export default PrivateRoute;

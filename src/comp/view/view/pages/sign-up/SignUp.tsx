@@ -1,4 +1,3 @@
-import {observer} from "mobx-react";
 import {useNavigate} from "react-router-dom";
 import * as Yup from 'yup';
 import axios from "axios";
@@ -6,10 +5,57 @@ import {toast, ToastContainer} from "react-toastify";
 import {Formik} from "formik";
 import {Button, TextField} from "@mui/material";
 import '../../../css/SignUp.scss'
+import {useAtom} from "jotai";
+import {atom} from "jotai";
+import {useMutation} from "react-query";
+import React from "react";
 
-const SignUp = observer(
-    () => {
+const SignUp = () => {
         const navigate = useNavigate();
+
+        const registerMember = async (values: any) => {
+            const { account, password, nickname, name, email } = values;
+            const response = await axios.post('/member/register',{
+                account,
+                password,
+                nickname,
+                name,
+                email,
+            });
+            return response.data;
+        }
+
+        const registerMutation = useMutation(registerMember, {
+            onSuccess: () => {
+                toast.success(<h3>회원가입이 완료되었습니다. <br/> 로그인 하세요 😍</h3>, {
+                    position: "top-center",
+                    autoClose: 2000,
+                });
+                setTimeout(() => {
+                    navigate('/login');
+                },2000);
+            },
+            onError: (error: any) => {
+                toast.error(error.respons.data.message + '😢', {
+                    position: 'top-center',
+                });
+            },
+        });
+
+        const {mutate, isLoading} = registerMutation;
+
+        const handleSubmit = (values: any) => {
+            const { account, password, nickname, name, email } = values;
+            registerMutation.mutate({
+                account,
+                password,
+                nickname,
+                name,
+                email,
+            });
+        };
+
+
         const validationSchema = Yup.object().shape({
             account: Yup.string()
                 .min(1, '아이디는 최소 1자리 이상입니다.')
@@ -51,29 +97,7 @@ const SignUp = observer(
                 .required('이메일을 입력하세요'),
         });
 
-        const submit = async (values: any) => {
-            const {account, password, nickname, name, email} = values;
-            try {
-                await axios.post('/member/register', {
-                    account,
-                    password,
-                    nickname,
-                    name,
-                    email,
-                });
-                toast.success(<h3>회원가입이 완료되었습니다. <br/> 로그인 하세요 😍</h3>, {
-                    position: 'top-center',
-                    autoClose: 2000,
-                });
-                setTimeout(() => {
-                    navigate('/login`');
-                }, 2000);
-            } catch (e: any) {
-                toast.error(e.respons.data.message + '😢', {
-                    position: 'top-center',
-                });
-            }
-        };
+
 
         return (
             <Formik
@@ -85,8 +109,9 @@ const SignUp = observer(
                     name: '',
                     email: '',
                 }}
+
                 validationSchema={validationSchema}
-                onSubmit={submit}
+                onSubmit={handleSubmit}
                 validateOnMount={true}
             >
                 {({values, handleSubmit, handleChange, errors}) => (
@@ -182,6 +207,6 @@ const SignUp = observer(
             </Formik>
         );
     }
-)
+
 
 export default SignUp;

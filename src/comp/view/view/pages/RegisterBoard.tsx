@@ -1,33 +1,42 @@
-import {observer} from "mobx-react";
+
 import React, {useCallback, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import {toast} from "react-toastify";
 import {Button} from "@mui/material";
-import TextArea from "../components/TextArea";
+import TextArea, {TextAreaProps} from "../components/TextArea";
 import '../../css/RegisterBoard.scss'
-import boardContainer from "../../BoardContainer";
+import {useAtom} from "jotai";
+import {boardKindAtom, contentAtom, titleAtom} from "../../AppContainer";
 
-const RegisterBoard = observer(
-    (props : any) => {
+interface Props extends TextAreaProps{
+    boardRegister: () =>  Promise<void>,
+    canSubmit: () => boolean
+}
+
+const RegisterBoard = ({boardRegister, canSubmit, handleChange}:Props) => {
+
+        const [content, setContent] = useAtom(contentAtom);
+        const [title, setTitle] = useAtom(titleAtom);
+        const [boardKind, setBoardKind] = useAtom(boardKindAtom);
 
         const navigate = useNavigate();
 
 
         const handleSubmit = useCallback(async () => {
             try{
-                await props.boardRegister();
+                await boardRegister();
                 window.alert("😎등록이 완료되었습니다😎");
-                navigate(`/board/${props.boardKind}`);
+                navigate(`/board/${boardKind}`);
             }catch (e){
                 toast.error("오류발생! 이모지를 사용하면 오류가 발생할 수 있습니다" + "😭", {
                     position: "top-center",
                 });
             } finally {
-                props.setTitle('');
-                props.setContent('');
+                setTitle('');
+                setContent('');
             }
-        },[props.canSubmit])
+        },[canSubmit])
 
 
         return(
@@ -37,7 +46,7 @@ const RegisterBoard = observer(
                         게시물 등록하기 🖊️
                     </div>
                     <div className="submitButton">
-                        {props.canSubmit() ? (
+                        {canSubmit() ? (
                             <Button
                                 onClick={handleSubmit}
                                 className="success-button"
@@ -56,14 +65,12 @@ const RegisterBoard = observer(
                         )}
                     </div>
                     <div className="addBoard-body">
-                        <TextArea setTitle={props.setTitle} setContent={props.setContent} title={props.title}
-                                  content={props.content}
-                                  handleChange={props.handleChange}/>
+                        <TextArea handleChange={handleChange} defaultContent='' defaultTitle=''/>
                     </div>
                 </div>
             </div>
         )
     }
-)
+
 
 export default RegisterBoard;

@@ -1,9 +1,7 @@
-import {observer} from "mobx-react";
 import React from "react";
 import '../../css/Home.scss'
 
-const Home = observer(
-    () => {
+const Home = () => {
         return(
             <div className="home-wrapper">
                 <div className="home-title">
@@ -24,6 +22,6 @@ const Home = observer(
             </div>
         )
     }
-)
+
 
 export default Home;

@@ -1,34 +1,38 @@
-import {observer} from "mobx-react";
+
 import {useParams} from "react-router";
 import {useCallback, useEffect, useState} from "react";
-import axios from "axios";
 import {toast} from "react-toastify";
 import {Button} from "@mui/material";
-import TextArea from "../components/TextArea";
+import TextArea, {TextAreaProps} from "../components/TextArea";
 import {useNavigate} from "react-router-dom";
+import {useAtom} from "jotai";
+import {antenaAtom, boardAtom, boardKindAtom, contentAtom, titleAtom} from "../../AppContainer";
 
-const EditBoard = observer(
-    (props : any) => {
+interface Props extends TextAreaProps{
+    boardEdit: (title: string, content: string, _id: string) => void,
+    getBoard:(_id: string) => void,
+}
+
+const EditBoard = ({boardEdit, getBoard}:Props) => {
+
+        const [board, setBoard] = useAtom(boardAtom);
+        const [antenta, setAntena] = useAtom(antenaAtom);
 
         const navigate = useNavigate();
 
         const _id = useParams().id;
-        const [title, setTitle] = useState("");
-        const [content, setContent] = useState("");
+        const [title, setTitle] = useAtom(titleAtom);
+        const [content, setContent] = useAtom(contentAtom);
         const [isEdit, setIsEdit] = useState('edit');
-        const [boardKind, setBoardKind] = useState(0);
+        const [boardKind, setBoardKind] = useAtom(boardKindAtom);
 
         useEffect(() => {
-            props.getBoard(_id);
+            getBoard(_id ?? 'default Value');
         }, [_id])
-
-        const canSubmit = useCallback(() => {
-            return content !== "" && title !== "";
-        }, [title, content]);
 
         const handleSubmit = useCallback(async () => {
             try {
-                await props.boardEdit(title, content,_id);
+                boardEdit(title, content, _id ?? 'default value');
                 window.alert("😎수정이 완료되었습니다😎");
                 navigate(`/board/detail/${_id}`);
             } catch (e) {
@@ -38,8 +42,9 @@ const EditBoard = observer(
             }finally {
                 setTitle('');
                 setContent('');
+                setAntena(false);
             }
-        }, [canSubmit])
+        }, [title, content])
 
         return (
             <div className="addBoard-wrapper">
@@ -48,7 +53,7 @@ const EditBoard = observer(
                         게시물 수정하기 🖊️
                     </div>
                     <div className="submitButton">
-                        {canSubmit() ? (
+                        {antenta ? (
                             <Button
                                 onClick={handleSubmit}
                                 className="success-button"
@@ -67,13 +72,11 @@ const EditBoard = observer(
                         )}
                     </div>
                     <div className="addBoard-body">
-                        <TextArea setTitle={setTitle} setContent={setContent} title={title} content={content}
-                                  isEdit={isEdit} setBoardKind={setBoardKind} boardKind={boardKind} id={_id}
-                                  prevTitle={props.board.title} prevContent={props.board.content}/>
+                        <TextArea isEdit={isEdit} id={_id} defaultContent={isEdit === 'edit' ? board.content : ''} defaultTitle={isEdit === 'edit' ? board.title : ''}/>
                     </div>
                 </div>
             </div>
         )
     }
-)
+
 export default EditBoard;

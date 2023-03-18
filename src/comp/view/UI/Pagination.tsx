@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+
 import React, {useState} from "react";
 
 const usePagination = (data: any[], itemsPerPage: number) => {

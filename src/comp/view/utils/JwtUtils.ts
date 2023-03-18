@@ -1,5 +1,4 @@
 import jwtDecode from "jwt-decode";
-import axios from "axios";
 
 export class JwtUtils{
     // 토큰 유효성 검사

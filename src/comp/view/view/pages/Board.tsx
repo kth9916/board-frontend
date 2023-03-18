@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+
 import React, {useEffect, useState} from "react";
 import {useParams} from "react-router";
 import {useNavigate} from "react-router-dom";
@@ -7,9 +7,17 @@ import {Button, Dialog, DialogContent, IconButton} from "@mui/material";
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import DisabledByDefaultOutlinedIcon from "@mui/icons-material/DisabledByDefaultOutlined";
+import {useAtom} from "jotai";
+import {boardAtom} from "../../AppContainer";
 
-const Board = observer(
-    (props : any) => {
+interface Props{
+    getBoard: (_id: string) => void,
+    boardDelete:(_id: string) => void
+}
+
+const Board = ({getBoard, boardDelete}:Props) => {
+
+        const [board, setBoard] = useAtom(boardAtom);
 
         // URL 파라미터 받기
         const _id = useParams().id;
@@ -22,7 +30,7 @@ const Board = observer(
 
         // board 가져오기
         useEffect(() => {
-            props.getBoard(_id);
+            getBoard(_id?? 'default value');
             setIsLoaded(true);
         }, [_id])
 
@@ -31,14 +39,14 @@ const Board = observer(
                 {isLoaded && <div className='board-wrapper'>
 
                     <div className="board-header">
-                        <div className="board-header-username">작성자 : {props.board.userName}</div>
-                        <div className="date">{props.board.registeredDate}</div>
+                        <div className="board-header-username">작성자 : {board.userName}</div>
+                        <div className="date">{board.registeredDate}</div>
                     </div>
                     <hr/>
                     <div className="board-body">
                         <div className="board-title-content">
-                            <div className="board-title">{props.board.title}</div>
-                            <div className="board-content">{props.board.content}</div>
+                            <div className="board-title">{board.title}</div>
+                            <div className="board-content">{board.content}</div>
                         </div>
                     </div>
                     <hr/>
@@ -80,9 +88,9 @@ const Board = observer(
                                     color="error"
                                     onClick={async () => {
                                         setShow(false);
-                                        await props.boardDelete(_id);
+                                        await boardDelete(_id?? 'default value');
                                         alert('게시글이 삭제되었습니다.');
-                                        navigate(`/board/${props.board.boardKind}`);
+                                        navigate(`/board/${board.boardKind}`);
                                     }}
                                 >
                                     예
@@ -103,6 +111,6 @@ const Board = observer(
             </>
         )
     }
-)
+
 
 export default Board;
