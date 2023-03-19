@@ -7,10 +7,10 @@ import {Button} from "@mui/material";
 import TextArea, {TextAreaProps} from "../components/TextArea";
 import '../../css/RegisterBoard.scss'
 import {useAtom} from "jotai";
-import {boardKindAtom, contentAtom, titleAtom} from "../../AppContainer";
+import {boardKindAtom, contentAtom, memberAtom, selectedImageAtom, titleAtom} from "../../AppContainer";
 
 interface Props extends TextAreaProps{
-    boardRegister: () =>  Promise<void>,
+    boardRegister: (formData: FormData) =>  Promise<void>,
     canSubmit: () => boolean
 }
 
@@ -19,13 +19,35 @@ const RegisterBoard = ({boardRegister, canSubmit, handleChange}:Props) => {
         const [content, setContent] = useAtom(contentAtom);
         const [title, setTitle] = useAtom(titleAtom);
         const [boardKind, setBoardKind] = useAtom(boardKindAtom);
+        const [selectedImage, setSelectedImage] = useAtom(selectedImageAtom);
+        const [member, SetMember] = useAtom(memberAtom);
 
         const navigate = useNavigate();
 
+        const handleImageSelect = useCallback((event: any) => {
+            const files = event.target.files;
+            if(files && files.length > 0){
+                setSelectedImage(files[0]);
+            }
+        },[])
+
 
         const handleSubmit = useCallback(async () => {
+
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append('content', content);
+            formData.append('boardKind', boardKind);
+            formData.append('userName',member?.name);
+            formData.append('userId',member?.account);
+            if(selectedImage){
+                formData.append('image',selectedImage);
+            }else {
+                formData.append('image','');
+            }
+
             try{
-                await boardRegister();
+                await boardRegister(formData);
                 window.alert("😎등록이 완료되었습니다😎");
                 navigate(`/board/${boardKind}`);
             }catch (e){
@@ -35,8 +57,9 @@ const RegisterBoard = ({boardRegister, canSubmit, handleChange}:Props) => {
             } finally {
                 setTitle('');
                 setContent('');
+                setSelectedImage(null);
             }
-        },[canSubmit])
+        },[canSubmit, title, content, boardKind, selectedImage])
 
 
         return(
@@ -66,6 +89,7 @@ const RegisterBoard = ({boardRegister, canSubmit, handleChange}:Props) => {
                     </div>
                     <div className="addBoard-body">
                         <TextArea handleChange={handleChange} defaultContent='' defaultTitle=''/>
+                        <input type='file' onChange={handleImageSelect}/>
                     </div>
                 </div>
             </div>

@@ -8,7 +8,9 @@ import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import DisabledByDefaultOutlinedIcon from "@mui/icons-material/DisabledByDefaultOutlined";
 import {useAtom} from "jotai";
-import {boardAtom} from "../../AppContainer";
+import {boardAtom, imagePathAtom, memberAtom} from "../../AppContainer";
+import CommentList from "./comment/CommentList";
+import axios from "axios";
 
 interface Props{
     getBoard: (_id: string) => void,
@@ -18,6 +20,7 @@ interface Props{
 const Board = ({getBoard, boardDelete}:Props) => {
 
         const [board, setBoard] = useAtom(boardAtom);
+        const [member, setMember] = useAtom(memberAtom);
 
         // URL 파라미터 받기
         const _id = useParams().id;
@@ -28,11 +31,32 @@ const Board = ({getBoard, boardDelete}:Props) => {
         //Modal이 보이는 여부 상태
         const [show, setShow] = useState(false);
 
+        // 이미지 경로 상태
+        const [imagePath, setImagePath] = useAtom(imagePathAtom);
+
         // board 가져오기
         useEffect(() => {
             getBoard(_id?? 'default value');
             setIsLoaded(true);
         }, [_id])
+
+        useEffect(() => {
+            if(board.image){
+                //이미지 경로 저장
+                axios.get(`/board/findById/${board._id}/image`, {
+                    responseType: 'arraybuffer',
+                })
+                    .then((response) => {
+                        const blob = new Blob([response.data], {
+                            type: board.image?.type,
+                        });
+                        setImagePath(URL.createObjectURL(blob));
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            }
+        },[board._id, board.image]);
 
         return (
             <>
@@ -47,9 +71,12 @@ const Board = ({getBoard, boardDelete}:Props) => {
                         <div className="board-title-content">
                             <div className="board-title">{board.title}</div>
                             <div className="board-content">{board.content}</div>
+                            <br/><br/>
+                            <div>{board.image && <img src={imagePath} alt={board.title} className='board-image' style={{maxWidth: '50%', maxHeight: '50vh'}}/>}</div>
                         </div>
                     </div>
                     <hr/>
+                    {member.account == board.userId ?
                     <div className="edit-delete-button">
                         <Button
                             variant="outlined" color="error" endIcon={<DeleteForeverOutlinedIcon/>}
@@ -69,6 +96,8 @@ const Board = ({getBoard, boardDelete}:Props) => {
                             수정
                         </Button>
                     </div>
+                        :''}
+                    <CommentList/>
                 </div>
                 }
 

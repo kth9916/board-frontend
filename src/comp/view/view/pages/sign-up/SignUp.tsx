@@ -8,10 +8,14 @@ import '../../../css/SignUp.scss'
 import {useAtom} from "jotai";
 import {atom} from "jotai";
 import {useMutation} from "react-query";
-import React from "react";
+import React, {useEffect} from "react";
+
+const signAtom = atom(false);
+
 
 const SignUp = () => {
         const navigate = useNavigate();
+        const [isSign, setIsSign] = useAtom(signAtom);
 
         const registerMember = async (values: any) => {
             const { account, password, nickname, name, email } = values;
@@ -27,6 +31,7 @@ const SignUp = () => {
 
         const registerMutation = useMutation(registerMember, {
             onSuccess: () => {
+                setIsSign(true);
                 toast.success(<h3>회원가입이 완료되었습니다. <br/> 로그인 하세요 😍</h3>, {
                     position: "top-center",
                     autoClose: 2000,
@@ -54,6 +59,10 @@ const SignUp = () => {
                 email,
             });
         };
+
+        useEffect(()=>{
+            setIsSign(false);
+        },[])
 
 
         const validationSchema = Yup.object().shape({
@@ -117,91 +126,93 @@ const SignUp = () => {
                 {({values, handleSubmit, handleChange, errors}) => (
                     <div className='signup-wrapper'>
                         <ToastContainer/>
-                        <form onSubmit={handleSubmit} autoComplete='off'>
-                            <div className='input-forms'>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>ID</div>
-                                    <TextField
-                                        value={values.account}
-                                        name='account'
-                                        variant='outlined'
-                                        onChange={handleChange}
+                        {isSign ? '' :
+                            <form onSubmit={handleSubmit} autoComplete='off'>
+                                <div className='input-forms'>
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>ID</div>
+                                        <TextField
+                                            value={values.account}
+                                            name='account'
+                                            variant='outlined'
+                                            onChange={handleChange}
                                         />
-                                    <div className='error-message'>
-                                        {errors.account}
+                                        <div className='error-message'>
+                                            {errors.account}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>비밀번호</div>
-                                    <TextField
-                                        value={values.password}
-                                        name='password'
-                                        variant='outlined'
-                                        type='password'
-                                        onChange={handleChange}
-                                    />
-                                    <div className='error-message'>
-                                        {errors.password}
-                                    </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>비밀번호 확인</div>
-                                    <TextField
-                                        value={values.password2}
-                                        name='password2'
-                                        variant='outlined'
-                                        type='password'
-                                        onChange={handleChange}
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>비밀번호</div>
+                                        <TextField
+                                            value={values.password}
+                                            name='password'
+                                            variant='outlined'
+                                            type='password'
+                                            onChange={handleChange}
                                         />
-                                    <div className='error-message'>
-                                        {errors.password2}
+                                        <div className='error-message'>
+                                            {errors.password}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>닉네임</div>
-                                    <TextField
-                                        value={values.nickname}
-                                        name='nickname'
-                                        variant='outlined'
-                                        onChange={handleChange}
-                                    />
-                                    <div className='error-message'>
-                                        {errors.nickname}
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>비밀번호 확인</div>
+                                        <TextField
+                                            value={values.password2}
+                                            name='password2'
+                                            variant='outlined'
+                                            type='password'
+                                            onChange={handleChange}
+                                        />
+                                        <div className='error-message'>
+                                            {errors.password2}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>이름</div>
-                                    <TextField
-                                        value={values.name}
-                                        name='name'
-                                        variant='outlined'
-                                        onChange={handleChange}
-                                    />
-                                    <div className='error-message'>
-                                        {errors.name}
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>닉네임</div>
+                                        <TextField
+                                            value={values.nickname}
+                                            name='nickname'
+                                            variant='outlined'
+                                            onChange={handleChange}
+                                        />
+                                        <div className='error-message'>
+                                            {errors.nickname}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>이메일</div>
-                                    <TextField
-                                        value={values.email}
-                                        name='email'
-                                        variant='outlined'
-                                        onChange={handleChange}
-                                    />
-                                    <div className='error-message'>
-                                        {errors.email}
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>이름</div>
+                                        <TextField
+                                            value={values.name}
+                                            name='name'
+                                            variant='outlined'
+                                            onChange={handleChange}
+                                        />
+                                        <div className='error-message'>
+                                            {errors.name}
+                                        </div>
                                     </div>
+                                    <div className='input-forms-item'>
+                                        <div className='input-label'>이메일</div>
+                                        <TextField
+                                            value={values.email}
+                                            name='email'
+                                            variant='outlined'
+                                            onChange={handleChange}
+                                        />
+                                        <div className='error-message'>
+                                            {errors.email}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        color='primary'
+                                        variant='contained'
+                                        fullWidth={true}
+                                        type='submit'>
+                                        회원가입
+                                    </Button>
                                 </div>
-                                <Button
-                                    color='primary'
-                                    variant='contained'
-                                    fullWidth={true}
-                                    type='submit'>
-                                    회원가입
-                                </Button>
-                            </div>
-                        </form>
+                            </form>
+                        }
                     </div>
                 )}
             </Formik>

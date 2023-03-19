@@ -20,28 +20,34 @@ import {atom} from "jotai";
 import {useQuery} from "react-query";
 import {useSetAtom} from "jotai";
 import {SetStateAction} from "jotai";
+import MyPage from "./view/pages/myPage/MyPage";
 
 export const postsAtom = atom([]);
 export const postsQueryAtom = atom(false);
 export const tokenAtom = atom<TokenRdo>({access_token: '', refresh_token: ''});
 export const boardListAtom = atom<BoardRdo[]>([]);
+export const myBoardListAtom = atom<BoardRdo[]>([]);
 export const boardAtom = atom({
-    _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: ""
+    _id: "", boardKind: 0, content: "", registeredDate: "", title: "", userName: "", userId: "", image: null as File | null
 })
 export const boardListNameAtom = atom('');
+export const myBoardListNameAtom = atom('');
 export const titleAtom = atom('');
 export const contentAtom = atom('');
-export const boardKindAtom = atom(0);
+export const boardKindAtom = atom('');
 export const memberAtom = atom({account : '', name : '', nickname : '', email : ''});
 export const accountAtom = atom('');
 export const antenaAtom = atom(false);
-
+export const selectedImageAtom = atom<File | null>(null);
+export const imagePathAtom = atom('');
 
 const AppContainer = (
     () => {
         const [posts, setPosts] = useAtom(postsAtom);
         const setPostsQueryEnabled = useSetAtom(postsQueryAtom);
         const [token, setToken] = useAtom(tokenAtom);
+        const [myBoardList, setMyBoardList] = useAtom(myBoardListAtom);
+        const [selectedImage, setSelectedImage] = useAtom(selectedImageAtom);
 
 
         const [boardList, setBoardList] = useAtom(boardListAtom);
@@ -50,6 +56,7 @@ const AppContainer = (
         const [board, setBoard] = useAtom(boardAtom);
 
         const [boardListName, setBoardListName] = useAtom(boardListNameAtom);
+        const [myBoardListName, setMyBoardListName] = useAtom(myBoardListNameAtom);
 
         const [title, setTitle] = useAtom(titleAtom);
 
@@ -67,16 +74,16 @@ const AppContainer = (
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + token['access_token'];
         axios.defaults.headers.common['refresh_token'] = 'Bearer ' + token['refresh_token'];
 
-        const { isLoading, data } = useQuery('posts', async () => {
-            const response = await axios.get('board/findAll');
-            return response.data;
-        });
-
-        useEffect(() => {
-            if(!isLoading && data){
-                setPosts(data);
-            }
-        },[isLoading, data, setPosts]);
+        // const { isLoading, data } = useQuery('posts', async () => {
+        //     const response = await axios.get('board/findAll');
+        //     return response.data;
+        // });
+        //
+        // useEffect(() => {
+        //     if(!isLoading && data){
+        //         setPosts(data);
+        //     }
+        // },[isLoading, data, setPosts]);
 
         useEffect(()=>{
             setPostsQueryEnabled(true);
@@ -125,23 +132,31 @@ const AppContainer = (
 
         // RegisterBoard
         const canSubmit = useCallback(() => {
-            return content !== "" && title !== "" && boardKind !== 0;
+            return content !== "" && title !== "" && boardKind !== '';
         }, [title, content, boardKind]);
 
-        const boardRegister = async () => {
-            await axios.post("/board/registerPost", {
-                title: title,
-                content: content,
-                boardKind: boardKind,
-                userName: member?.name,
-                userId : member?.account,
+        const boardRegister = async (formData: FormData) => {
+            await axios.post("/board/registerPost",formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
-            console.log('이름'+member?.account);
-        }
+        };
 
         const handleBoardKindChange = (e: any) => {
             setBoardKind(e.target.value);
         }
+
+        // FindByUserId
+        const findByUserId = async (userId: string) => {
+            await axios.get(`/board/findByUserId/${userId}`).then(res => setMyBoardList(sortJson(res.data, 'registeredDate', 'desc')))
+        }
+
+        const findByUserIdAndBoardKind = async (userId: string, boardKind: number) => {
+            await axios.get(`/board/findByUserIdAndBoardKind/${userId}/${boardKind}`).then(res => setMyBoardList(sortJson(res.data, 'registeredDate', 'desc')))
+        }
+
+
 
         // Board
         const getBoard = async (_id: string) => {
@@ -176,6 +191,22 @@ const AppContainer = (
             }
             if(boardKind === '4'){
                 setBoardListName('Q&A 게시판');
+            }
+        }
+
+        const getMyBoardListName = (boardKind : string) =>{
+            if(boardKind === '1'){
+                setMyBoardListName('일반 게시판');
+            }
+            if(boardKind === '2'){
+                setMyBoardListName('공지 게시판');
+            }
+            if(boardKind === '3'){
+                setMyBoardListName('FAQ 게시판');
+
+            }
+            if(boardKind === '4'){
+                setMyBoardListName('Q&A 게시판');
             }
         }
 
@@ -231,6 +262,7 @@ const AppContainer = (
                                    element={<EditBoard boardEdit={boardEdit} getBoard={getBoard}/>}/>
                             <Route path='/join' element={<SignUp/>}/>
                             <Route path='/login' element={<Login changeToken={changeToken} changeAccount={changeAccount}/>}/>
+                            <Route path='/myboard-list' element={<MyPage findByUserIdAndBoardKind={findByUserIdAndBoardKind} getMyBoardListName={getMyBoardListName} handleBoardKindChange={handleBoardKindChange} findByUserId={findByUserId}/>}/>
                         </Routes>
                     </div>
                 </div>

@@ -1,19 +1,26 @@
 
-import {useNavigate, useSearchParams} from "react-router-dom";
+import {redirect, useNavigate, useSearchParams} from "react-router-dom";
 import * as Yup from 'yup';
 import axios from "axios";
 import {toast, ToastContainer} from "react-toastify";
 import {ErrorMessage, Formik} from "formik";
 import {Button, TextField} from "@mui/material";
 import TokenRdo from "../../../../api/feature/member/api-model/TokenRdo";
+import {atom, useAtom} from "jotai";
+import {useEffect} from "react";
 
 interface Props{
     changeToken: (token: TokenRdo) => void,
     changeAccount: (access_token: string) => void
 }
+const loginAtom = atom(false);
+const toastAtom = atom(false);
 
 const Login = ({changeToken, changeAccount}:Props) => {
         const navigate = useNavigate();
+        const [isLogin, setIsLogin] = useAtom(loginAtom);
+        const [isTost, setIsToast] = useAtom(toastAtom);
+
         const [searchParams, setSearchParams] = useSearchParams();
         const validationSchema = Yup.object().shape({
             account : Yup.string()
@@ -24,7 +31,9 @@ const Login = ({changeToken, changeAccount}:Props) => {
 
         const submit = async (values: { account: any; password: any; }) => {
             const {account, password} = values;
+            setIsToast(false);
             try{
+                setIsLogin(true);
                 const {data} = await axios.post('/member/login',{
                     account,
                     password,
@@ -45,64 +54,82 @@ const Login = ({changeToken, changeAccount}:Props) => {
                     }
                 },2000);
             }catch (e : any){
-                toast.error(e.response.data.message + '🤣',{
+                toast.error('로그인이 실패했습니다! ' + '🤣',{
                     position : 'top-center',
+                    autoClose: 2000,
                 });
+                setTimeout(()=>{
+                    toast.dismiss();
+                    setIsToast(true);
+                    setIsLogin(false);
+                    navigate('/login');
+                },2000);
             }
         };
 
-        return(
-            <Formik
-                initialValues={{
-                    account : '',
-                    password : '',
-                }}
-                validationSchema={validationSchema}
-                onSubmit={submit}
-            >
-                {({values, handleSubmit, handleChange})=> (
-                    <div className='signup-wrapper'>
-                        <ToastContainer/>
-                        <form onSubmit={handleSubmit} autoComplete='off'>
-                            <div className='input-forms'>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>ID</div>
-                                    <TextField
-                                        value={values.account}
-                                        name='account'
-                                        variant='outlined'
-                                        onChange={handleChange}
-                                        />
-                                    <div className='error-message'>
-                                        <ErrorMessage name='account'/>
+        useEffect(()=>{
+            setIsLogin(false);
+            setIsToast(false);
+        },[])
+
+        return(<>
+
+                <Formik
+                    initialValues={{
+                        account: '',
+                        password: '',
+                    }}
+                    validationSchema={validationSchema}
+                    onSubmit={submit}
+                >
+                    {({values, handleSubmit, handleChange}) => (
+                        <div className='signup-wrapper'>
+                            {isTost ? '' : <ToastContainer
+                                autoClose={2000}
+                            />}
+                            {isLogin ? '' :
+                                <form onSubmit={handleSubmit} autoComplete='off'>
+                                    <div className='input-forms'>
+                                        <div className='input-forms-item'>
+                                            <div className='input-label'>ID</div>
+                                            <TextField
+                                                value={values.account}
+                                                name='account'
+                                                variant='outlined'
+                                                onChange={handleChange}
+                                            />
+                                            <div className='error-message'>
+                                                <ErrorMessage name='account'/>
+                                            </div>
+                                        </div>
+                                        <div className='input-forms-item'>
+                                            <div className='input-label'>비밀번호</div>
+                                            <TextField
+                                                value={values.password}
+                                                name='password'
+                                                variant='outlined'
+                                                type='password'
+                                                onChange={handleChange}
+                                            />
+                                            <div className='error-message'>
+                                                <ErrorMessage name='password'/>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            color='primary'
+                                            variant='contained'
+                                            fullWidth={true}
+                                            type='submit'
+                                        >
+                                            로그인
+                                        </Button>
                                     </div>
-                                </div>
-                                <div className='input-forms-item'>
-                                    <div className='input-label'>비밀번호</div>
-                                    <TextField
-                                        value={values.password}
-                                        name='password'
-                                        variant='outlined'
-                                        type='password'
-                                        onChange={handleChange}
-                                    />
-                                    <div className='error-message'>
-                                        <ErrorMessage name='password'/>
-                                    </div>
-                                </div>
-                                <Button
-                                    color='primary'
-                                    variant='contained'
-                                    fullWidth={true}
-                                    type='submit'
-                                    >
-                                    로그인
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                )}
-            </Formik>
+                                </form>
+                            }
+                        </div>
+                    )}
+                </Formik>
+            </>
         )
     }
 
